@@ -1,0 +1,20 @@
+[project]
+name = "anime-girl-finder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "customtkinter>=6.0.0",
+    "numpy>=2.5.3",
+    "pillow>=12.3.0",
+    "requests>=2.34.2",
+    "scikit-image>=0.26.0",
+]
+
+[project.scripts]
+anime-girl-finder = "anime_girl_finder:main"
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
