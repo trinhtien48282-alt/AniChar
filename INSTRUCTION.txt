@@ -1,0 +1,357 @@
+# ANICHAR C++ REMASTER 
+
+You are working on my existing **AniChar** project.
+
+Project path:
+`C:\Users\Dell\Documents\VS Code Projects\Akaruis Toolbox\AniChar`
+
+I want to **remaster AniChar from Python into C++**.
+
+IMPORTANT: Do NOT perform a line-by-line Python → C++ translation.
+
+The existing Python version is the **behavioral reference implementation**. The goal is to understand what it does, preserve its useful behavior, and rebuild it as a cleaner, more maintainable C++ application.
+
+## YOUR ROLE
+
+Act like a senior C++ developer taking over an existing small application.
+
+Priorities:
+
+1. Correctness
+2. Maintainability
+3. Simple architecture
+4. Reuse existing logic where appropriate
+5. Avoid unnecessary dependencies
+6. Avoid overengineering
+7. Keep the code understandable
+8. Preserve existing user-facing behavior unless there is a good reason to improve it
+
+Follow the Ponytail philosophy:
+**write the least code that correctly solves the problem.**
+
+Do not add frameworks, abstractions, libraries, or architecture just because they are available.
+
+---
+
+# PHASE 0: INSPECT FIRST
+
+Before writing or modifying code:
+
+1. Inspect the entire AniChar repository.
+2. Identify:
+
+   * Python entry point
+   * GUI framework
+   * character data format
+   * search logic
+   * filtering logic
+   * sorting logic
+   * image handling
+   * configuration
+   * external dependencies
+   * assets
+   * generated/cache files
+   * tests
+3. Understand the current application flow.
+4. Identify what functionality is actually important.
+5. Identify bugs or questionable behavior, but DO NOT fix unrelated things yet.
+
+Do not start writing C++ immediately.
+
+At the end of this phase, give me:
+
+* Current architecture
+* Important files
+* Core features
+* Data model
+* Search/filter behavior
+* GUI behavior
+* Dependencies
+* Risks during migration
+* Recommended C++ architecture
+
+Then STOP.
+
+Do not implement Phase 1 until I explicitly tell you to continue.
+
+---
+
+# TARGET C++ ARCHITECTURE
+
+The target should roughly resemble:
+
+AniChar/
+├── CMakeLists.txt
+├── README.md
+├── LICENSE
+├── assets/
+├── data/
+├── include/
+│   └── anichar/
+│       ├── character.hpp
+│       ├── database.hpp
+│       ├── search.hpp
+│       ├── filters.hpp
+│       └── app.hpp
+├── src/
+│   ├── main.cpp
+│   ├── character.cpp
+│   ├── database.cpp
+│   ├── search.cpp
+│   ├── filters.cpp
+│   └── app.cpp
+└── tests/
+
+This is only a starting point.
+
+If the existing application is simpler, make the architecture simpler.
+
+Do NOT create files just to make the project look sophisticated.
+
+---
+
+# DATA MODEL
+
+Prefer a data-driven architecture.
+
+Character information should eventually be represented by structured data rather than huge amounts of hardcoded conditional logic.
+
+For example:
+
+{
+"name": "Example Character",
+"hair": ["black"],
+"eyes": ["blue"],
+"anime": "Example Anime"
+}
+
+Do NOT assume this exact schema is correct.
+
+First inspect the existing AniChar data and preserve its actual information.
+
+If the current data is messy, design a sensible migration path.
+
+---
+
+# SEARCH ENGINE
+
+The C++ search system must support the functionality currently provided by AniChar.
+
+Pay particular attention to:
+
+* hair color
+* eye color
+* anime/source
+* character name
+* gender if currently supported
+* multiple filters
+* matching behavior
+* case sensitivity
+* aliases/synonyms
+* missing data
+* sorting
+* result ordering
+
+IMPORTANT:
+
+Do not "fix" search behavior merely because you personally prefer another interpretation.
+
+First reproduce existing behavior.
+
+Improvements can come later.
+
+---
+
+# GUI
+
+Do not choose a GUI framework blindly.
+
+After inspecting the current project, recommend the most appropriate C++ GUI framework.
+
+Consider:
+
+* Qt
+* wxWidgets
+* Dear ImGui
+* FLTK
+* other lightweight options if justified
+
+Prefer the simplest framework that can reproduce the existing AniChar UI cleanly.
+
+Do not add a framework until the choice is justified.
+
+---
+
+# MIGRATION STRATEGY
+
+The migration should happen incrementally.
+
+Suggested stages:
+
+## Stage 0
+
+Repository inspection and migration plan.
+
+## Stage 1
+
+Create the CMake C++ project structure.
+
+## Stage 2
+
+Create the C++ character/data model.
+
+## Stage 3
+
+Migrate the character database.
+
+## Stage 4
+
+Implement search and filtering.
+
+## Stage 5
+
+Implement image/resource handling.
+
+## Stage 6
+
+Implement the GUI.
+
+## Stage 7
+
+Compare C++ results against the Python implementation.
+
+## Stage 8
+
+Fix discrepancies.
+
+## Stage 9
+
+Build, test, and clean the repository.
+
+## Stage 10
+
+Only after verification, consider retiring the Python implementation.
+
+---
+
+# VERY IMPORTANT: DO NOT DELETE THE PYTHON VERSION YET
+
+The Python version is our reference implementation.
+
+Keep it intact while the C++ version is being developed.
+
+If possible, create automated or semi-automated comparison tests such as:
+
+Python query:
+"black hair"
+
+Expected result set:
+A, B, C, D
+
+C++ query:
+"black hair"
+
+Expected:
+A, B, C, D
+
+The goal is behavioral parity.
+
+---
+
+# BUILD SYSTEM
+
+Use **CMake**.
+
+The project should eventually build with a normal workflow such as:
+
+cmake -S . -B build
+cmake --build build
+
+Do not assume a compiler or package manager that does not exist.
+
+First inspect the machine/project environment and determine what is already available.
+
+Avoid forcing me to install unnecessary dependencies.
+
+---
+
+# CODE QUALITY
+
+Use modern C++ where appropriate.
+
+Prefer:
+
+* RAII
+* const correctness
+* clear ownership
+* standard library containers
+* std::string / std::string_view where appropriate
+* smart pointers only when ownership actually requires them
+* small focused functions
+* clear naming
+
+Avoid:
+
+* giant classes
+* global state
+* unnecessary inheritance
+* singleton abuse
+* giant header files
+* premature templates
+* unnecessary design patterns
+* excessive comments that merely restate code
+
+---
+
+# GIT SAFETY
+
+Before making substantial changes:
+
+Check:
+
+git status
+git branch
+git log --oneline -10
+
+Do not:
+
+* force push
+* delete branches
+* rewrite history
+* reset unrelated work
+* modify unrelated repositories
+
+Make changes incrementally.
+
+After each major completed stage:
+
+* build
+* test
+* inspect diff
+* report what changed
+
+---
+
+# IMPORTANT BEHAVIOR
+
+If you encounter ambiguity:
+
+DO NOT silently invent behavior.
+
+Tell me what you found and make the smallest reasonable assumption.
+
+If something requires a major architectural decision, stop and ask before implementing it.
+
+Do not start rewriting the entire application in one giant operation.
+
+---
+
+# FIRST TASK
+
+For now, perform **ONLY PHASE 0: INSPECTION**.
+
+Do not create the C++ implementation yet.
+
+Inspect the existing AniChar project thoroughly and give me a concrete migration plan based on the ACTUAL codebase.
+
+Then STOP and wait for my approval.
