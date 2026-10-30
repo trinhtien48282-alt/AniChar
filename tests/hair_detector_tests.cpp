@@ -1,5 +1,9 @@
 #include "anichar/hair_detector.hpp"
 
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QImage>
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -42,8 +46,27 @@ void absent(const RgbImage& image, const std::string& label) {
 }
 }
 
-int main() {
+int main(int argc, char** argv) {
+    QCoreApplication app(argc, argv);
     try {
+        QImage source(320, 160, QImage::Format_ARGB32);
+        source.fill(qRgba(25, 80, 210, 255));
+        QByteArray encoded;
+        QBuffer buffer(&encoded);
+        check(buffer.open(QIODevice::WriteOnly) && source.save(&buffer, "PNG"), "encode image fixture");
+        QImage thumbnail;
+        const auto decoded = decodeImage(encoded, &thumbnail);
+        check(decoded.width == 128 && decoded.height == 64 && decoded.pixels.size() == 128 * 64 * 3,
+              "decoder scales while preserving aspect ratio and returns packed RGB");
+        check(thumbnail.width() == 200 && thumbnail.height() == 100,
+              "decoder also creates Python-sized card thumbnail from same decoded image");
+        check(decoded.pixels[0] == 25 && decoded.pixels[1] == 80 && decoded.pixels[2] == 210,
+              "decoder converts image channels to RGB");
+        bool corruptImage = false;
+        try { (void)decodeImage(QByteArray("not an image")); }
+        catch (const std::runtime_error&) { corruptImage = true; }
+        check(corruptImage, "invalid image bytes return a decoder error");
+
         auto dark = solid(64, 64, {240, 220, 200});
         rect(dark, 8, 0, 55, 30, {18, 15, 20});
         rect(dark, 15, 28, 50, 46, {220, 180, 150});

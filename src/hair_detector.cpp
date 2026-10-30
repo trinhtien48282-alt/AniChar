@@ -1,5 +1,11 @@
 #include "anichar/hair_detector.hpp"
 
+#include <QBuffer>
+#include <QImage>
+#include <QImageReader>
+#include <QSize>
+#include <QString>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -8,6 +14,43 @@
 #include <utility>
 
 namespace anichar {
+namespace {
+RgbImage rgbImage(QImage image) {
+    if (image.isNull()) throw std::invalid_argument("Image decoder returned an empty image");
+    image = image.convertToFormat(QImage::Format_RGB888).scaled(
+        QSize(128, 128), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    RgbImage out{static_cast<std::size_t>(image.width()), static_cast<std::size_t>(image.height()), {}};
+    out.pixels.reserve(out.width * out.height * 3);
+    for (int y = 0; y < image.height(); ++y) {
+        const auto* row = image.constScanLine(y);
+        out.pixels.insert(out.pixels.end(), row, row + out.width * 3);
+    }
+    return out;
+}
+}
+
+RgbImage decodeImage(const QByteArray& data, QImage* cardThumbnail) {
+    QBuffer buffer;
+    buffer.setData(data);
+    if (!buffer.open(QIODevice::ReadOnly)) throw std::runtime_error("Could not read image data");
+    QImageReader reader(&buffer);
+    reader.setAutoTransform(true);
+    auto image = reader.read();
+    if (image.isNull()) throw std::runtime_error(reader.errorString().toStdString());
+    if (cardThumbnail)
+        *cardThumbnail = image.convertToFormat(QImage::Format_RGB888)
+            .scaled(200, 280, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return rgbImage(image);
+}
+
+RgbImage loadImage(const QString& path) {
+    QImageReader reader(path);
+    reader.setAutoTransform(true);
+    const auto image = reader.read();
+    if (image.isNull()) throw std::runtime_error(reader.errorString().toStdString());
+    return rgbImage(image);
+}
+
 namespace {
 using Vec3 = std::array<double, 3>;
 

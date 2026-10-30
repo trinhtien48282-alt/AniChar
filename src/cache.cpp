@@ -178,11 +178,46 @@ std::optional<CacheRecord> Cache::get(std::int64_t id) const {
 void Cache::backfill(std::int64_t id, const std::optional<std::string>& gender,
                      const std::string& infoJson) {
     std::lock_guard<std::mutex> lock(mutex_);
-    Statement stmt(db_, "UPDATE chars SET gender=COALESCE(gender,?),info=COALESCE(info,?) WHERE mal_id=?");
+    Statement stmt(db_, "UPDATE chars SET gender=COALESCE(gender,?),info=CASE WHEN info IS NULL OR info='{}' THEN ? ELSE info END WHERE mal_id=?");
     bindOptionalText(db_, stmt.get(), 1, gender);
     bindText(db_, stmt.get(), 2, infoJson);
     check(db_, sqlite3_bind_int64(stmt.get(), 3, id));
     check(db_, sqlite3_step(stmt.get()));
+}
+
+std::vector<StaleCacheRecord> Cache::staleAnalyses() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    Statement stmt(db_, "SELECT mal_id,img_path FROM chars WHERE version<>?");
+    check(db_, sqlite3_bind_int(stmt.get(), 1, currentVersion));
+    std::vector<StaleCacheRecord> rows;
+    for (;;) {
+        const int rc = sqlite3_step(stmt.get());
+        if (rc == SQLITE_DONE) break;
+        check(db_, rc);
+        rows.push_back({sqlite3_column_int64(stmt.get(), 0), textColumn(stmt.get(), 1)});
+    }
+    return rows;
+}
+
+void Cache::updateAnalysis(std::int64_t id, const std::optional<Rgb>& rgb,
+                          const std::optional<double>& confidence) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    Statement stmt(db_, "UPDATE chars SET r=?,g=?,b=?,lab_l=?,lab_a=?,lab_b=?,conf=?,version=? WHERE mal_id=?");
+    auto* s = stmt.get();
+    for (int i = 0; i < 3; ++i) {
+        if (rgb) check(db_, sqlite3_bind_int(s, 1 + i, (*rgb)[i]));
+        else check(db_, sqlite3_bind_null(s, 1 + i));
+    }
+    const auto lab = rgb ? std::optional<Lab>(toLab(*rgb)) : std::nullopt;
+    const double values[] = {lab ? lab->l : 0.0, lab ? lab->a : 0.0, lab ? lab->b : 0.0};
+    for (int i = 0; i < 3; ++i) {
+        if (lab) check(db_, sqlite3_bind_double(s, 4 + i, values[i]));
+        else check(db_, sqlite3_bind_null(s, 4 + i));
+    }
+    bindOptionalDouble(db_, s, 7, rgb ? confidence : std::nullopt);
+    check(db_, sqlite3_bind_int(s, 8, currentVersion));
+    check(db_, sqlite3_bind_int64(s, 9, id));
+    check(db_, sqlite3_step(s));
 }
 
 std::vector<CacheMatch> Cache::ranked(const RankOptions& options) const {

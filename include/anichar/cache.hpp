@@ -26,6 +26,11 @@ struct CacheMatch {
     double similarity = 0.0;
 };
 
+struct StaleCacheRecord {
+    std::int64_t id = 0;
+    std::string imagePath;
+};
+
 class Cache {
 public:
     explicit Cache(const std::string& path);
@@ -37,6 +42,9 @@ public:
     std::optional<CacheRecord> get(std::int64_t id) const;
     void backfill(std::int64_t id, const std::optional<std::string>& gender,
                   const std::string& infoJson);
+    std::vector<StaleCacheRecord> staleAnalyses() const;
+    void updateAnalysis(std::int64_t id, const std::optional<Rgb>& rgb,
+                        const std::optional<double>& confidence);
     std::vector<CacheMatch> ranked(const RankOptions& options = {}) const;
 
 private:
